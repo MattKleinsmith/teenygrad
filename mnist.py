@@ -3,6 +3,7 @@ import numpy as np
 from teenygrad import Tensor
 from tqdm import trange
 import gzip, os
+from PIL import Image
 
 from teenygrad.nn import optim
 from teenygrad.helpers import getenv
@@ -70,7 +71,7 @@ class TinyConvNet:
   def __init__(self):
     # https://keras.io/examples/vision/mnist_convnet/
     conv = 3
-    #inter_chan, out_chan = 32, 64
+    # inter_chan, out_chan = 32, 64
     inter_chan, out_chan = 8, 16   # for speed
     self.c1 = Tensor.scaled_uniform(inter_chan,1,conv,conv)
     self.c2 = Tensor.scaled_uniform(out_chan,inter_chan,conv,conv)
@@ -82,10 +83,39 @@ class TinyConvNet:
     x = x.conv2d(self.c2).relu().max_pool2d()
     x = x.reshape(shape=[x.shape[0], -1])
     return x.dot(self.l1).log_softmax()
+  
+  def save(self):
+    np.save("c1.npy", self.c1.numpy())
+    np.save("c2.npy", self.c2.numpy())
+    np.save("l1.npy", self.l1.numpy())
+
+  def load(self):
+    try: self.c1 = Tensor(np.load("c1.npy"))
+    except: return False
+    try: self.c2 = Tensor(np.load("c2.npy"))
+    except: return False
+    try: self.l1 = Tensor(np.load("l1.npy"))
+    except: return False
+    return True
 
 if __name__ == "__main__":
   np.random.seed(1337)
   model = TinyConvNet()
-  optimizer = optim.Adam([model.c1, model.c2, model.l1], lr=0.001)
-  train(model, X_train, Y_train, optimizer, steps=100)
-  assert evaluate(model, X_test, Y_test) > 0.93
+
+  if model.load():
+    print("model loaded")
+  else:
+    optimizer = optim.Adam([model.c1, model.c2, model.l1], lr=0.001)
+    train(model, X_train, Y_train, optimizer, steps=100)
+    model.save()
+
+  # convert image to grayscale 28x28
+  image = np.array(Image.open("./extra/datasets/mnist/original.png").convert("L").resize((28, 28))).reshape((-1, 28*28)).astype(np.float32)
+  image[image <= 35] = 0
+  for i in range(0, len(image[0]), 28):
+      print(' '.join(f'{number.astype(int):3d}' for number in image[0][i:i+28]))
+  input = Tensor(image)
+
+  # process the input
+  output = model.forward(input)
+  print(np.argmax(output.numpy(), axis=-1))
