@@ -6,15 +6,15 @@ from mnist import TinyConvNet
 import tkinter as tk
 
 class DrawingApp:
-  def __init__(self, master):
-    self.master = master
-    self.canvas = tk.Canvas(master, width=400, height=400, bg="black")
+  def __init__(self, root):
+    self.root = root
+    self.canvas = tk.Canvas(root, width=400, height=400, bg="black")
     self.canvas.pack()
 
-    self.clear_button = tk.Button(master, text="Clear", command=self.clear_canvas)
+    self.clear_button = tk.Button(root, text="Clear", command=self.clear_canvas)
     self.clear_button.pack()
 
-    self.read_button = tk.Button(master, text="Read", command=self.read_canvas)
+    self.read_button = tk.Button(root, text="Read", command=self.read_canvas)
     self.read_button.pack()
 
     self.previous_x = None
@@ -40,12 +40,12 @@ class DrawingApp:
 
   def read_canvas_continuously(self):
     self.read_canvas()
-    self.master.after(50, self.read_canvas_continuously)
+    self.root.after(50, self.read_canvas_continuously)
 
   def read_canvas(self):
     # fix coordinates for my Retina display
-    x = self.master.winfo_rootx() + 15
-    y = self.master.winfo_rooty() + 80
+    x = self.root.winfo_rootx() + 15
+    y = self.root.winfo_rooty() + 80
     x1 = x + self.canvas.winfo_width() * 2 - 20
     y1 = y + self.canvas.winfo_height() * 2 - 20
     image = np.array(ImageGrab.grab().crop((x, y, x1, y1)).convert("L").resize((28, 28))).reshape((-1, 28*28)).astype(np.float32)
