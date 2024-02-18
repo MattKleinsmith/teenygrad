@@ -34,7 +34,7 @@ class DrawingApp:
     self.previous_x = event.x
     self.previous_y = event.y
 
-  def reset(self):
+  def reset(self, event):
     self.previous_x = None
     self.previous_y = None
 
